@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,30 +25,40 @@ class MyApp extends StatelessWidget {
 }
 
 class Contact{
+  final String id;
   final String name;
-  const Contact({required this.name});
+  Contact({required this.name}): id= Uuid().v4();
 }
 
-class ContactBook{
+class ContactBook extends ValueNotifier<List<Contact>>{
   //Creating a singleton, i.e. private constructor in dart- standard method
-  ContactBook._sharedInstance();
+  ContactBook._sharedInstance() : super([]);
   static final ContactBook _shared = ContactBook._sharedInstance();
   factory ContactBook()=> _shared;
 
-  final List<Contact> _contacts =[];
-
-  int get length=> _contacts.length;
+  int get length=> value.length;
 
   void add({required contact}){
-    final ValueNotifier notifier;
-    _contacts.add(contact);
+    // final ValueNotifier notifier;
+    // value.add(contact);
+    // notifyListeners();
+
+    final contacts = value;
+    contacts.add(contact);
+    // value = contacts;
+    notifyListeners();
   }
 
   void remove({required contact}){
-    _contacts.remove(contact);
+    final contacts = value;
+    if(contacts.contains(contact)){
+      contacts.remove(contact);
+      // value = contacts; equality doesn't agree with setter here
+      notifyListeners();
+    }
   }
 
-  Contact? contact({required int atIndex}) => _contacts.length> atIndex ? _contacts[atIndex]: null;
+  Contact? contact({required int atIndex}) => value.length> atIndex ? value[atIndex]: null;
 }
 
 class Homepage extends StatefulWidget {
@@ -66,14 +77,30 @@ class _HomepageState extends State<Homepage> {
       appBar: AppBar(
         title: Text("Home Page"),
       ),
-      body: ListView.builder(
-          itemCount: contactBook.length,
-          itemBuilder: (context, index){
-            final contact = contactBook.contact(atIndex: index);
-            return ListTile(
-              title: Text(contact!.name),
-            );
-          }
+      body: ValueListenableBuilder(
+        valueListenable: ContactBook(),
+        builder: (context, value, child) {
+          final contacts = value as List<Contact>;
+          return ListView.builder(
+              itemCount: contacts.length,
+              itemBuilder: (context, index){
+                final contact = contacts[index];
+                return Dismissible(
+                  onDismissed: (direction){
+                    // contacts.remove(contact);
+                    ContactBook().remove(contact: contact);
+                  },
+                  key: ValueKey(contact.id),
+                  child: Material(
+                    color: Colors.white,
+                    elevation: 6,
+                    child: ListTile(
+                      title: Text(contact!.name),
+                    ),
+                  ),
+                );
+              },);
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async{
@@ -100,6 +127,12 @@ class _NewContactViewState extends State<NewContactView> {
   void initState(){
     _controller = TextEditingController();
     super.initState();
+  }
+
+  @override
+  //When your higher up widget changes in the case of it not being a constant
+  void didUpdateWidget(covariant NewContactView oldWidget){
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
