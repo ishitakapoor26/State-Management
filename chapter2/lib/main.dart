@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +16,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const HomePage(),
+      home: ApiProvider(
+          api: Api(),
+          child: const HomePage()),
     );
   }
 }
@@ -50,3 +53,29 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+class Api{
+  String? dateAndTime;
+  Future<String> getDateAndTime(){
+    return Future.delayed(
+      Duration(seconds: 1),
+        ()=> DateTime.now().toIso8601String(),
+    ).then((value) {
+      dateAndTime =value;
+      return value;
+    });
+  }
+}
+
+class ApiProvider extends InheritedWidget{
+  final Api api;
+  final String uuid;
+  ApiProvider({Key? key, required this.api, required Widget child}): uuid = Uuid().v4(), super(key: key, child: child);
+
+  @override
+  bool updateShouldNotify(covariant ApiProvider oldWidget) {
+    return uuid !=oldWidget.uuid;
+  }
+  static ApiProvider of(BuildContext context){
+    return context.dependOnInheritedWidgetOfExactType<ApiProvider>()!;
+  }
+}
