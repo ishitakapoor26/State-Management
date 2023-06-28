@@ -32,25 +32,43 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String title = "Tap the Screen";
+  ValueKey _textKey = const ValueKey<String?>(null);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Text(ApiProvider.of(context).api.dateAndTime ?? ''),
       ),
       body: GestureDetector(
-        onTap: () {
+        onTap: () async {
+          final api = ApiProvider.of(context).api;
+          final dateAndTime = await api.getDateAndTime();
+          // Now anything dependent on the value key will be rebuilt, so will the date and time widget as it is dependent on it.
           setState(() {
-            title = DateTime.now().toIso8601String();
+            _textKey = ValueKey(dateAndTime);
           });
         },
-        child: Container(
-          color: Colors.white,
+        child: SizedBox.expand(
+          child: Container(
+            color: Colors.white,
+            child: DateTimeWidget(key: _textKey),
+          ),
         ),
       ),
     );
+  }
+}
+
+class DateTimeWidget extends StatelessWidget {
+  // Here this key is the unique id to this widget to check whether am I the same widget or do I need to be redrawn?
+  // Taking a value key here, compare it with the value of dateandtime, if changes it should update this particular widget accordingly.
+  const DateTimeWidget({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ApiProvider.of(context).api;
+    return Text(api.dateAndTime ?? 'Tap on screen to fetch date and time');
   }
 }
 
@@ -79,6 +97,7 @@ class ApiProvider extends InheritedWidget {
 
   @override
   bool updateShouldNotify(covariant ApiProvider oldWidget) {
+    // old instance of api provider class gets compared with the new one.
     return uuid != oldWidget.uuid;
   }
 
