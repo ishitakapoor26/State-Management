@@ -1,3 +1,6 @@
+// Tapping on screen takes you to fake api class and extract current date and time with a delay.
+// Then update both the title of the homepage and text of independent widget in this homepage and given they are not passing data to each other.
+
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -16,9 +19,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: ApiProvider(
-          api: Api(),
-          child: const HomePage()),
+      home: ApiProvider(api: Api(), child: const HomePage()),
     );
   }
 }
@@ -31,7 +32,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String title ="Tap the Screen";
+  String title = "Tap the Screen";
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +41,9 @@ class _HomePageState extends State<HomePage> {
         title: Text(title),
       ),
       body: GestureDetector(
-        onTap: (){
+        onTap: () {
           setState(() {
-            title= DateTime.now().toIso8601String();
+            title = DateTime.now().toIso8601String();
           });
         },
         child: Container(
@@ -53,29 +54,35 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class Api{
+// Grabs current date and time but with a little delay
+class Api {
   String? dateAndTime;
-  Future<String> getDateAndTime(){
+  Future<String> getDateAndTime() {
     return Future.delayed(
       Duration(seconds: 1),
-        ()=> DateTime.now().toIso8601String(),
+      () => DateTime.now().toIso8601String(),
     ).then((value) {
-      dateAndTime =value;
+      dateAndTime = value;
       return value;
     });
   }
 }
 
-class ApiProvider extends InheritedWidget{
+// Provider Class
+class ApiProvider extends InheritedWidget {
   final Api api;
+  // Assigning inherited widget with a unique id.
   final String uuid;
-  ApiProvider({Key? key, required this.api, required Widget child}): uuid = Uuid().v4(), super(key: key, child: child);
+  ApiProvider({Key? key, required this.api, required Widget child})
+      : uuid = Uuid().v4(),
+        super(key: key, child: child);
 
   @override
   bool updateShouldNotify(covariant ApiProvider oldWidget) {
-    return uuid !=oldWidget.uuid;
+    return uuid != oldWidget.uuid;
   }
-  static ApiProvider of(BuildContext context){
+
+  static ApiProvider of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<ApiProvider>()!;
   }
 }
