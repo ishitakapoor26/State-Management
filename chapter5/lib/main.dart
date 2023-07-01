@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
         ),
         home: Homepage(),
         routes: {
-          '/new': (context) => Material(),
+          '/new': (context) => NewBreadCrumbWidget(),
         },
       ),
     );
@@ -101,7 +101,15 @@ class Homepage extends StatelessWidget {
         title: Text('Home Page'),
       ),
       body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Consumer<BreadCrumbProvider>(
+            builder: (context, value, child) {
+              return BreadCrumbsWidget(
+                breadCrumbs: value.item,
+              );
+            },
+          ),
           TextButton(
               onPressed: () {
                 Navigator.of(context).pushNamed('/new');
@@ -113,6 +121,57 @@ class Homepage extends StatelessWidget {
                 context.read<BreadCrumbProvider>().reset();
               },
               child: Text('Reset')),
+        ],
+      ),
+    );
+  }
+}
+
+class NewBreadCrumbWidget extends StatefulWidget {
+  const NewBreadCrumbWidget({Key? key}) : super(key: key);
+
+  @override
+  State<NewBreadCrumbWidget> createState() => _NewBreadCrumbWidgetState();
+}
+
+class _NewBreadCrumbWidgetState extends State<NewBreadCrumbWidget> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    _controller = TextEditingController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Add New BreadCrumb"),
+      ),
+      body: Column(
+        children: [
+          TextField(
+            controller: _controller,
+            decoration:
+                const InputDecoration(hintText: 'Enter a new BreadCrumb'),
+          ),
+          TextButton(
+              onPressed: () {
+                final text = _controller.text;
+                if (text.isNotEmpty) {
+                  final breadCrumb = BreadCrumb(isActive: false, name: text);
+                  context.read<BreadCrumbProvider>().add(breadCrumb);
+                  Navigator.of(context).pop();
+                }
+              },
+              child: Text('Add'))
         ],
       ),
     );
